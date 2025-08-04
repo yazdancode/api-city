@@ -74,7 +74,7 @@ switch ($request_method) {
             Response::respondAndDie([
                 'status' => 'success',
                 'data' => $response
-            ], Httpstatus::HTTP_OK);
+            ]);
 
         } catch (Exception $e) {
             Response::respondAndDie([
@@ -86,12 +86,12 @@ switch ($request_method) {
 
     // ---- PUT: ویرایش (فعلاً فقط پاسخ ثابت می‌دهد) ----
     case 'PUT':
-        Response::respondAndDie(['message' => 'PUT Request'], Httpstatus::HTTP_OK);
+        Response::respondAndDie(['message' => 'PUT Request']);
         break;
 
     // ---- DELETE: حذف (فعلاً فقط پاسخ ثابت می‌دهد) ----
     case 'DELETE':
-        Response::respondAndDie(['message' => 'DELETE Request'], Httpstatus::HTTP_OK);
+        Response::respondAndDie(['message' => 'DELETE Request']);
         break;
 
     // ---- در صورت استفاده از متد نامعتبر ----

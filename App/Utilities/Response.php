@@ -2,8 +2,6 @@
 
 namespace App\Utilities;
 
-use App\Utilities\Httpstatus;
-
 class Response
 {
     /**
@@ -13,7 +11,7 @@ class Response
      * @param int $statusCode
      * @return void
      */
-    public static function respond($data, $statusCode = Httpstatus::HTTP_OK): void
+    public static function respond($data, int $statusCode = Httpstatus::HTTP_OK): void
     {
         self::setHeaders($statusCode);
 
@@ -34,7 +32,7 @@ class Response
      * @param int $statusCode
      * @return void
      */
-    public static function respondAndDie($data, $statusCode = Httpstatus::HTTP_OK): void
+    public static function respondAndDie($data, int $statusCode = Httpstatus::HTTP_OK): void
     {
         self::respond($data, $statusCode);
     }
@@ -46,7 +44,7 @@ class Response
      * @param array $customHeaders
      * @return void
      */
-    public static function setHeaders($statusCode, array $customHeaders = []): void
+    public static function setHeaders(int $statusCode, array $customHeaders = []): void
     {
         header('Content-Type: application/json; charset=utf-8');
         header('Access-Control-Allow-Origin: *');
