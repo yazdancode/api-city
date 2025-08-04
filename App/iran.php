@@ -19,19 +19,31 @@ function isValidProvince($data){
 
 
 #================  Read Operations  =================
+
 function getCities($data = null){
     global $pdo;
-    $province_id = $data['province_id'] ?? null;
-    $where = '';
-    if(!is_null($province_id) and is_int($province_id)){
-        $where = "where province_id = {$province_id} ";
+
+    $province_id = null;
+
+    // بررسی اینکه ورودی آرایه است یا آبجکت
+    if (is_array($data)) {
+        $province_id = $data['province_id'] ?? null;
+    } elseif (is_object($data)) {
+        $province_id = $data->province_id ?? null;
     }
-    $sql = "select * from city $where";
+
+    $where = '';
+    if (!is_null($province_id) && is_numeric($province_id)) {
+        $where = "WHERE province_id = {$province_id}";
+    }
+
+    $sql = "SELECT * FROM city $where";
     $stmt = $pdo->prepare($sql);
     $stmt->execute();
     $records = $stmt->fetchAll(PDO::FETCH_OBJ);
     return $records;
 }
+
 function getProvinces($data = null){
     global $pdo;
     $sql = "select * from province";

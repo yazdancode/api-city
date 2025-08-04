@@ -1,21 +1,26 @@
 <?php
 
+// بارگذاری فایل‌های مورد نیاز (autoload یا تعریفات سرویس‌ها)
 include_once "../../../loader.php";
 
 use App\Services\CityService;
 use App\Utilities\Response;
 use App\Utilities\Httpstatus;
 
-
+// اگر اسکریپت در خط فرمان اجرا شد (CLI)، پیام نشان داده و خارج شود
 if (php_sapi_name() === 'cli') {
     echo "City endpoint is here\n";
     exit;
 }
+
+// گرفتن متد درخواست (POST, GET, ...)
 $request_method = $_SERVER['REQUEST_METHOD'];
+// خواندن محتوای بدنه درخواست در صورت نیاز (برای PUT و POST)
 $request_body = json_decode(file_get_contents('php://input'), true);
 
 switch ($request_method) {
 
+    // ---- POST: ساخت شهر جدید ----
     case 'POST':
         try {
             $name = $_POST['name'] ?? null;
@@ -29,6 +34,7 @@ switch ($request_method) {
                 'name' => $name,
                 'province_id' => $province_id
             ];
+
             $cityService = new CityService();
             $newCity = $cityService->createCity($request_data);
 
@@ -46,16 +52,24 @@ switch ($request_method) {
         }
         break;
 
+    // ---- GET: گرفتن لیست شهرها ----
     case 'GET':
         try {
             $province_id = $_GET['province_id'] ?? null;
 
-            $request_data = [
-                'province_id' => $province_id
+            if (!is_null($province_id) && !is_numeric($province_id)) {
+                Response::respondAndDie([
+                    'status' => 'error',
+                    'message' => 'شناسه استان معتبر نیست. باید عددی باشد.'
+                ], Httpstatus::HTTP_BAD_REQUEST);
+            }
+
+            $request_data = (object)[
+                'province_id' => is_null($province_id) ? null : (int)$province_id
             ];
 
             $cityService = new CityService();
-            $response = $cityService->getCities((object)$request_data);
+            $response = $cityService->getCities($request_data);
 
             Response::respondAndDie([
                 'status' => 'success',
@@ -65,19 +79,22 @@ switch ($request_method) {
         } catch (Exception $e) {
             Response::respondAndDie([
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => 'خطای سرور: ' . $e->getMessage()
             ], Httpstatus::HTTP_INTERNAL_SERVER_ERROR);
         }
         break;
 
+    // ---- PUT: ویرایش (فعلاً فقط پاسخ ثابت می‌دهد) ----
     case 'PUT':
         Response::respondAndDie(['message' => 'PUT Request'], Httpstatus::HTTP_OK);
         break;
 
+    // ---- DELETE: حذف (فعلاً فقط پاسخ ثابت می‌دهد) ----
     case 'DELETE':
         Response::respondAndDie(['message' => 'DELETE Request'], Httpstatus::HTTP_OK);
         break;
 
+    // ---- در صورت استفاده از متد نامعتبر ----
     default:
         Response::respondAndDie(['message' => 'Invalid request method'], Httpstatus::HTTP_METHOD_NOT_ALLOWED);
 }
