@@ -6,14 +6,13 @@ use App\Services\CityService;
 use App\Utilities\Response;
 use App\Utilities\Httpstatus;
 
-// اگر از طریق CLI اجرا بشه فقط پیام نمایش داده میشه
+
 if (php_sapi_name() === 'cli') {
     echo "City endpoint is here\n";
     exit;
 }
-
-// دریافت متد درخواست
 $request_method = $_SERVER['REQUEST_METHOD'];
+$request_body = json_decode(file_get_contents('php://input'), true);
 
 switch ($request_method) {
 
@@ -80,6 +79,5 @@ switch ($request_method) {
         break;
 
     default:
-        // متد نامعتبر
         Response::respondAndDie(['message' => 'Invalid request method'], Httpstatus::HTTP_METHOD_NOT_ALLOWED);
 }
