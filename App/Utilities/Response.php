@@ -2,13 +2,63 @@
 
 namespace App\Utilities;
 
+use App\Utilities\Httpstatus;
+
 class Response
 {
-    public static function respond($data, $statusCode = 200)
+    /**
+     * ارسال پاسخ JSON و پایان اجرای اسکریپت
+     *
+     * @param mixed $data
+     * @param int $statusCode
+     * @return void
+     */
+    public static function respond($data, $statusCode = Httpstatus::HTTP_OK): void
     {
-        header("HTTP/1.1 $statusCode");
-        header('Content-Type: application/json');
-        echo json_encode($data);
+        self::setHeaders($statusCode);
+
+        $response = [
+            'http_status' => $statusCode,
+            'http_message' => Httpstatus::STATUS_TEXTS[$statusCode] ?? 'Unknown Status',
+            'data' => $data,
+        ];
+
+        echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit;
+    }
+
+    /**
+     * معادل respond ولی برای سازگاری با کدهای قبلی
+     *
+     * @param mixed $data
+     * @param int $statusCode
+     * @return void
+     */
+    public static function respondAndDie($data, $statusCode = Httpstatus::HTTP_OK): void
+    {
+        self::respond($data, $statusCode);
+    }
+
+    /**
+     * تنظیم هدرهای HTTP
+     *
+     * @param int $statusCode
+     * @param array $customHeaders
+     * @return void
+     */
+    public static function setHeaders($statusCode, array $customHeaders = []): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Max-Age: 3600');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization');
+
+        $statusText = Httpstatus::STATUS_TEXTS[$statusCode] ?? 'Unknown Status';
+        header("HTTP/1.1 $statusCode $statusText");
+
+        foreach ($customHeaders as $key => $value) {
+            header("$key: $value");
+        }
     }
 }
