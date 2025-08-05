@@ -50,6 +50,7 @@ try {
                 'province_id' => $provinceId ? (int)$provinceId : null,
                 'page' => $page ? (int)$page : null,
                 'pagesize' => $pagesize ? (int)$pagesize : null,
+                'fields' => $_GET['fields'] ?? $_GET['field'] ?? null, // نام درست‌تر
             ]);
 
             if (empty($cities)) {
@@ -62,6 +63,7 @@ try {
                 'data' => $cities
             ]);
             break;
+
 
 
         case 'PUT':
