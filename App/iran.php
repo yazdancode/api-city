@@ -27,13 +27,16 @@ function getCities($data = null): array
 
     $data = (array)($data ?? []);
 
-    $province_id = $data['province_id'] ?? null;
+    $provinceId = $data['province_id'] ?? null;
     $page = $data['page'] ?? null;
-    $pagesize = $data['pagesize'] ?? null;
+    $pageSize = $data['pagesize'] ?? null;
     $fields = $data['fields'] ?? '*';
+    $orderby = $data['orderby'] ?? null;
 
-    // Validate fields
+    // لیست فیلدهای مجاز
     $allowedFields = ['id', 'name', 'province_id', 'created_at', 'updated_at'];
+
+    // اعتبارسنجی فیلدهای درخواستی
     if ($fields !== '*') {
         $requestedFields = array_map('trim', explode(',', $fields));
         $validatedFields = array_intersect($requestedFields, $allowedFields);
@@ -42,36 +45,47 @@ function getCities($data = null): array
             errorResponse('فیلدهای درخواستی نامعتبر هستند.', Httpstatus::HTTP_BAD_REQUEST);
         }
 
-        $fields = implode(',', $validatedFields);
+        $fields = implode(', ', $validatedFields);
     }
 
+    // پردازش و اعتبارسنجی ORDER BY
+    $orderBySql = '';
+    if (!empty($orderby)) {
+        // پشتیبانی از حالت "name asc" یا "id desc"
+        $parts = preg_split('/\s+/', trim($orderby));
+        $field = $parts[0] ?? '';
+        $direction = strtolower($parts[1] ?? 'asc');
+
+        if (!in_array($field, $allowedFields) || !in_array($direction, ['asc', 'desc'])) {
+            errorResponse('مقدار orderby نامعتبر است.', Httpstatus::HTTP_BAD_REQUEST);
+        }
+
+        $orderBySql = "ORDER BY $field $direction";
+    }
+
+    // WHERE
     $where = '';
-    $limit = '';
     $params = [];
-
-    if (!is_null($province_id) && is_numeric($province_id)) {
+    if (!is_null($provinceId) && is_numeric($provinceId)) {
         $where = "WHERE province_id = :province_id";
-        $params['province_id'] = (int)$province_id;
+        $params[':province_id'] = (int)$provinceId;
     }
 
-    if (!is_null($page) && !is_null($pagesize) && is_numeric($page) && is_numeric($pagesize)) {
-        $offset = ((int)$page - 1) * (int)$pagesize;
-        $limit = "LIMIT :offset, :pagesize";
-        $params['offset'] = $offset;
-        $params['pagesize'] = (int)$pagesize;
+    // صفحه‌بندی
+    $limitSql = '';
+    if (!is_null($page) && !is_null($pageSize) && is_numeric($page) && is_numeric($pageSize)) {
+        $offset = ((int)$page - 1) * (int)$pageSize;
+        $limitSql = "LIMIT :offset, :pagesize";
+        $params[':offset'] = $offset;
+        $params[':pagesize'] = (int)$pageSize;
     }
 
-    $sql = "SELECT $fields FROM city $where $limit";
+    // SQL نهایی
+    $sql = "SELECT $fields FROM city $where $orderBySql $limitSql";
     $stmt = $pdo->prepare($sql);
 
-    if (isset($params['province_id'])) {
-        $stmt->bindValue(':province_id', $params['province_id'], PDO::PARAM_INT);
-    }
-    if (isset($params['offset'])) {
-        $stmt->bindValue(':offset', $params['offset'], PDO::PARAM_INT);
-    }
-    if (isset($params['pagesize'])) {
-        $stmt->bindValue(':pagesize', $params['pagesize'], PDO::PARAM_INT);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value, PDO::PARAM_INT);
     }
 
     $stmt->execute();

@@ -51,6 +51,7 @@ try {
                 'page' => $page ? (int)$page : null,
                 'pagesize' => $pagesize ? (int)$pagesize : null,
                 'fields' => $_GET['fields'] ?? $_GET['field'] ?? null, // نام درست‌تر
+                'orderby' => $_GET['orderby'] ?? null,
             ]);
 
             if (empty($cities)) {
