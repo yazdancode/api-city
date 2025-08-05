@@ -8,12 +8,14 @@ try {
 }
 
 #==============  Simple Validators  ================
-function isValidCity($data){
+function isValidCity($data): bool
+{
     if(empty($data['province_id']) or !is_numeric($data['province_id']))
         return false;
     return empty($data['name']) ? false : true;
 }
-function isValidProvince($data){
+function isValidProvince($data): bool
+{
     return empty($data['name']) ? false : true;
 }
 
@@ -44,7 +46,8 @@ function getCities($data = null){
     $records = $stmt->fetchAll(PDO::FETCH_OBJ);
     return $records;
 }
-function getProvinces($data = null){
+function getProvinces($data = null): array
+{
     global $pdo;
     $sql = "select * from province";
     $stmt = $pdo->prepare($sql);
@@ -78,7 +81,8 @@ function addProvince($data){
 
 
 #================  Update Operations  =================
-function changeCityName($city_id,$name){
+function changeCityName($city_id,$name): int
+{
     global $pdo;
     $sql = "update city set name = '$name' where id = $city_id";
     $stmt = $pdo->prepare($sql);
@@ -94,14 +98,16 @@ function changeProvinceName($province_id,$name){
 }
 
 #================  Delete Operations  =================
-function deleteCity($city_id){
+function deleteCity($city_id): int
+{
     global $pdo;
     $sql = "delete from city where id = $city_id";
     $stmt = $pdo->prepare($sql);
     $stmt->execute();
     return $stmt->rowCount();
 }
-function deleteProvince($province_id){
+function deleteProvince($province_id): int
+{
     global $pdo;
     $sql = "delete from province where id = $province_id";
     $stmt = $pdo->prepare($sql);
