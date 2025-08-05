@@ -12,48 +12,66 @@ function isValidCity($data): bool
 {
     if(empty($data['province_id']) or !is_numeric($data['province_id']))
         return false;
-    return empty($data['name']) ? false : true;
+    return !empty($data['name']);
 }
 function isValidProvince($data): bool
 {
-    return empty($data['name']) ? false : true;
+    return !empty($data['name']);
 }
 
 
 #================  Read Operations  =================
-function getCities($data = null){
+function getCities($data = null): array
+{
     global $pdo;
 
-    // اگر آبجکت است به آرایه تبدیل شود
-    if (is_object($data)) {
-        $data = (array)$data;
-    }
+    $data = (array)($data ?? []);
 
     $province_id = $data['province_id'] ?? null;
+    $page = $data['page'] ?? null;
+    $pagesize = $data['pagesize'] ?? null;
+
     $where = '';
-    if(!is_null($province_id) and is_numeric($province_id)){
+    $limit = '';
+    $params = [];
+
+    if (!is_null($province_id) && is_numeric($province_id)) {
         $where = "WHERE province_id = :province_id";
+        $params['province_id'] = $province_id;
     }
-    $sql = "SELECT * FROM city $where";
+
+    if (!is_null($page) && !is_null($pagesize) && is_numeric($page) && is_numeric($pagesize)) {
+        $offset = ($page - 1) * $pagesize;
+        $limit = "LIMIT :offset, :pagesize";
+        $params['offset'] = (int)$offset;
+        $params['pagesize'] = (int)$pagesize;
+    }
+
+    $sql = "SELECT * FROM city $where $limit";
     $stmt = $pdo->prepare($sql);
 
-    if (!empty($where)) {
-        $stmt->execute(['province_id' => $province_id]);
-    } else {
-        $stmt->execute();
+    if (isset($params['province_id'])) {
+        $stmt->bindValue(':province_id', $params['province_id'], PDO::PARAM_INT);
+    }
+    if (isset($params['offset'])) {
+        $stmt->bindValue(':offset', $params['offset'], PDO::PARAM_INT);
+    }
+    if (isset($params['pagesize'])) {
+        $stmt->bindValue(':pagesize', $params['pagesize'], PDO::PARAM_INT);
     }
 
-    $records = $stmt->fetchAll(PDO::FETCH_OBJ);
-    return $records;
+    $stmt->execute();
+
+    return $stmt->fetchAll(PDO::FETCH_OBJ);
 }
+
 function getProvinces($data = null): array
 {
     global $pdo;
     $sql = "select * from province";
     $stmt = $pdo->prepare($sql);
     $stmt->execute();
-    $records = $stmt->fetchAll(PDO::FETCH_OBJ);
-    return $records;
+    return $stmt->fetchAll(PDO::FETCH_OBJ);
 }
 
 
@@ -89,7 +107,8 @@ function changeCityName($city_id,$name): int
     $stmt->execute();
     return $stmt->rowCount();
 }
-function changeProvinceName($province_id,$name){
+function changeProvinceName($province_id,$name): int
+{
     global $pdo;
     $sql = "update province set name = '$name' where id = $province_id";
     $stmt = $pdo->prepare($sql);

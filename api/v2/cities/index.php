@@ -34,18 +34,35 @@ try {
 
         case 'GET':
             $provinceId = $_GET['province_id'] ?? null;
+            $page = $_GET['page'] ?? null;
+            $pagesize = $_GET['pagesize'] ?? null;
+
             if ($provinceId !== null && !is_numeric($provinceId)) {
                 errorResponse('شناسه استان باید عددی باشد.', Httpstatus::HTTP_BAD_REQUEST);
             }
 
-            $cities = $cityService->getCities((object)['province_id' => $provinceId ? (int)$provinceId : null]);
+            if (($page !== null && (!is_numeric($page) || $page <= 0)) ||
+                ($pagesize !== null && (!is_numeric($pagesize) || $pagesize <= 0))) {
+                errorResponse('مقدار page و pagesize باید اعداد مثبت باشند.', Httpstatus::HTTP_BAD_REQUEST);
+            }
+
+            $cities = $cityService->getCities((object)[
+                'province_id' => $provinceId ? (int)$provinceId : null,
+                'page' => $page ? (int)$page : null,
+                'pagesize' => $pagesize ? (int)$pagesize : null,
+            ]);
 
             if (empty($cities)) {
                 errorResponse('هیچ شهری یافت نشد.', Httpstatus::HTTP_NOT_FOUND);
             }
 
-            Response::respondAndDie(['status' => 'success', 'data' => $cities]);
+            Response::respondAndDie([
+                'status' => 'success',
+                'count' => count($cities),
+                'data' => $cities
+            ]);
             break;
+
 
         case 'PUT':
             $cityId = $requestBody['city_id'] ?? null;
