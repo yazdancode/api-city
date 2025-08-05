@@ -2,10 +2,10 @@
 try {
     $pdo = new PDO("mysql:dbname=iran;host=localhost", 'root', '');
     $pdo->exec("set names utf8;");
+    // echo "Connection OK!";
 } catch (PDOException $e) {
     die('Connection failed: ' . $e->getMessage());
 }
-
 
 #==============  Simple Validators  ================
 function isValidCity($data): bool
@@ -21,11 +21,14 @@ function isValidProvince($data): bool
 
 
 #================  Read Operations  =================
-function getCities($data = null) {
+function getCities($data = null){
     global $pdo;
+
+    // اگر آبجکت است به آرایه تبدیل شود
     if (is_object($data)) {
         $data = (array)$data;
     }
+
     $province_id = $data['province_id'] ?? null;
     $where = '';
     if(!is_null($province_id) and is_numeric($province_id)){
@@ -40,75 +43,17 @@ function getCities($data = null) {
         $stmt->execute();
     }
 
-    return $stmt->fetchAll(PDO::FETCH_OBJ);
+    $records = $stmt->fetchAll(PDO::FETCH_OBJ);
+    return $records;
 }
-
-function getProvinces($data = null): array {
+function getProvinces($data = null): array
+{
     global $pdo;
-    $sql = "SELECT * FROM province";
+    $sql = "select * from province";
     $stmt = $pdo->prepare($sql);
     $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_OBJ);
-}
-
-function getCityById($city_id) {
-    global $pdo;
-    $sql = "SELECT * FROM city WHERE id = :id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute(['id' => $city_id]);
-    return $stmt->fetch(PDO::FETCH_OBJ);
-}
-
-function getProvinceById($province_id) {
-    global $pdo;
-    $sql = "SELECT * FROM province WHERE id = :id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute(['id' => $province_id]);
-    return $stmt->fetch(PDO::FETCH_OBJ);
-}
-
-function searchCitiesByName($keyword) {
-    global $pdo;
-    $sql = "SELECT * FROM city WHERE name LIKE :keyword";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute(['keyword' => "%$keyword%"]);
-    return $stmt->fetchAll(PDO::FETCH_OBJ);
-}
-
-function countCitiesByProvince($province_id) {
-    global $pdo;
-    $sql = "SELECT COUNT(*) as total FROM city WHERE province_id = :province_id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute(['province_id' => $province_id]);
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    return $result['total'] ?? 0;
-}
-
-function getProvincesWithCityCount() {
-    global $pdo;
-    $sql = "
-        SELECT p.*, COUNT(c.id) as city_count
-        FROM province p
-        LEFT JOIN city c ON c.province_id = p.id
-        GROUP BY p.id
-        ORDER BY city_count DESC
-    ";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_OBJ);
-}
-
-function getAllCitiesGroupedByProvince() {
-    global $pdo;
-    $sql = "
-        SELECT p.name as province_name, c.name as city_name
-        FROM province p
-        JOIN city c ON c.province_id = p.id
-        ORDER BY p.name, c.name
-    ";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_OBJ);
+    $records = $stmt->fetchAll(PDO::FETCH_OBJ);
+    return $records;
 }
 
 
@@ -118,76 +63,69 @@ function addCity($data){
     if(!isValidCity($data)){
         return false;
     }
-    $sql = "INSERT INTO city (province_id, name) VALUES (:province_id, :name)";
+    $sql = "INSERT INTO city (province_id, name) VALUES (:province_id, :name);";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute(['province_id'=>$data['province_id'],'name'=>$data['name']]);
+    $stmt->execute([':province_id'=>$data['province_id'],':name'=>$data['name']]);
     return $stmt->rowCount();
 }
-
 function addProvince($data){
     global $pdo;
     if(!isValidProvince($data)){
         return false;
     }
-    $sql = "INSERT INTO province (name) VALUES (:name)";
+    $sql = "INSERT INTO province (name) VALUES (:name);";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute(['name'=>$data['name']]);
+    $stmt->execute([':name'=>$data['name']]);
     return $stmt->rowCount();
 }
 
 
 #================  Update Operations  =================
-function changeCityName($city_id, $name): int {
+function changeCityName($city_id,$name): int
+{
     global $pdo;
-    $sql = "UPDATE city SET name = :name WHERE id = :id";
+    $sql = "update city set name = '$name' where id = $city_id";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute(['name' => $name, 'id' => $city_id]);
+    $stmt->execute();
     return $stmt->rowCount();
 }
-
-function changeProvinceName($province_id, $name): int {
+function changeProvinceName($province_id,$name){
     global $pdo;
-    $sql = "UPDATE province SET name = :name WHERE id = :id";
+    $sql = "update province set name = '$name' where id = $province_id";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute(['name' => $name, 'id' => $province_id]);
+    $stmt->execute();
     return $stmt->rowCount();
 }
-
-function updateCity($city_id, $data) {
-    global $pdo;
-    $sql = "UPDATE city SET name = :name, province_id = :province_id WHERE id = :id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        'id' => $city_id,
-        'name' => $data['name'],
-        'province_id' => $data['province_id']
-    ]);
-    return $stmt->rowCount();
-}
-
 
 #================  Delete Operations  =================
-function deleteCity($city_id): int {
+function deleteCity($city_id): int
+{
     global $pdo;
-    $sql = "DELETE FROM city WHERE id = :id";
+    $sql = "delete from city where id = $city_id";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute(['id' => $city_id]);
+    $stmt->execute();
+    return $stmt->rowCount();
+}
+function deleteProvince($province_id): int
+{
+    global $pdo;
+    $sql = "delete from province where id = $province_id";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
     return $stmt->rowCount();
 }
 
-function deleteProvince($province_id): int {
-    global $pdo;
-    $sql = "DELETE FROM province WHERE id = :id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute(['id' => $province_id]);
-    return $stmt->rowCount();
-}
-
-# =================== Test Examples ===================
+// Function Tests
+// $data = addCity(['province_id' => 23,'name' => "Loghman Shahr"]);
+// $data = addProvince(['name' => "7Learn"]);
+// $data = getCities(['province_id' => 23]);
+// $data = deleteProvince(34);
+// $data = changeProvinceName(34,"سون لرن");
+// $data = getProvinces();
+// $data = deleteCity(443);
+// $data = changeCityName(445,"لقمان شهر");
+// $data = getCities(['province_id' => 1]);
+// $data = json_encode($data);
 // echo "<pre>";
-// print_r(getProvincesWithCityCount());
-// print_r(getAllCitiesGroupedByProvince());
-// print_r(searchCitiesByName("تهران"));
-// print_r(getCityById(1));
-// print_r(updateCity(1, ['name' => 'نام جدید', 'province_id' => 2]));
-// echo "</pre>";
+// print_r($data);
+// echo "<pre>";

@@ -18,5 +18,4 @@ class CityService{
     {
         return deleteCity($city_id);
     }
-        
 }

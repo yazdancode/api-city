@@ -36,7 +36,6 @@ try {
 
         case 'GET':
             $provinceId = $_GET['province_id'] ?? null;
-
             if ($provinceId !== null && !is_numeric($provinceId)) {
                 errorResponse('شناسه استان باید عددی باشد.', Httpstatus::HTTP_BAD_REQUEST);
             }
