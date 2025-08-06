@@ -1,10 +1,15 @@
 <?php
+
+require __DIR__ . '/../../../loader.php';
 use App\Services\CityService;
 use App\Utilities\Response;
 use App\Utilities\Httpstatus;
 use App\Utilities\CacheUtility;
 
-require __DIR__ . '/../../../loader.php';
+#TODO: check Authorization (use a jwt token)
+
+
+
 
 if (php_sapi_name() === 'cli') {
     echo "City endpoint is here\n";
@@ -32,8 +37,7 @@ try {
             break;
 
         case 'GET':
-            // ابتدا init را صدا بزن
-            CacheUtility::init(true);
+            CacheUtility::init(false);
             if (CacheUtility::cacheExists()) {
                 Response::setHeaders();
                 CacheUtility::start();

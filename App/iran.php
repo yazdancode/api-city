@@ -1,6 +1,7 @@
 <?php
 
 use App\Utilities\Httpstatus;
+use Firebase\JWT\JWT;
 
 try {
     $pdo = new PDO("mysql:dbname=iran;host=localhost", 'root', '');
@@ -182,4 +183,38 @@ function deleteProvince($province_id): int
     $stmt = $pdo->prepare($sql);
     $stmt->execute([':id' => (int)$province_id]);
     return $stmt->rowCount();
+}
+
+
+#================  Auth Operations  =================
+# its our user database 😀
+$users = [
+    (object)['id'=>1,'name'=>'Loghman','email'=>'loghman@7learn.com','role' => 'admin','allowed_provinces' => []],
+    (object)['id'=>2,'name'=>'Sara','email'=>'sara@7learn.com','role' => 'Governor','allowed_provinces' => [7,8,9]],
+    (object)['id'=>3,'name'=>'Ali','email'=>'ali@7learn.com','role' => 'mayor','allowed_provinces' => [3]],
+    (object)['id'=>4,'name'=>'Hassan','email'=>'hassan@7learn.com','role' => 'president','allowed_provinces' => []]
+];
+
+function getUserById($id)
+{
+    global $users;
+    foreach ($users as $user)
+        if($user->id = $id)
+            return $user;
+        return null;
+}
+
+function getUserByEmail($email){
+    global $users;
+    foreach ($users as $user)
+        if(strtolower($user->email) == strtolower($email))
+            return $user;
+    return null;
+}
+
+function createapitoken($user)
+{
+    $payload = ['user_id' => $user->id];
+    return JWT::encode($payload, JWT_KEY,JWT_ALG);
+
 }
