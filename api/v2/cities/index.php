@@ -1,10 +1,10 @@
 <?php
-
-include_once "../../../loader.php";
-
 use App\Services\CityService;
 use App\Utilities\Response;
 use App\Utilities\Httpstatus;
+use App\Utilities\CacheUtility;
+
+require __DIR__ . '/../../../loader.php';
 
 if (php_sapi_name() === 'cli') {
     echo "City endpoint is here\n";
@@ -14,7 +14,6 @@ if (php_sapi_name() === 'cli') {
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 $requestBody = json_decode(file_get_contents('php://input'), true);
 $cityService = new CityService();
-
 
 function errorResponse(string $message, int $statusCode): void
 {
@@ -33,6 +32,16 @@ try {
             break;
 
         case 'GET':
+            // ابتدا init را صدا بزن
+            CacheUtility::init(true);
+            if (CacheUtility::cacheExists()) {
+                Response::setHeaders();
+                CacheUtility::start();
+                exit;
+            }
+
+            CacheUtility::start();
+
             $provinceId = $_GET['province_id'] ?? null;
             $page = $_GET['page'] ?? null;
             $pagesize = $_GET['pagesize'] ?? null;
@@ -41,31 +50,36 @@ try {
                 errorResponse('شناسه استان باید عددی باشد.', Httpstatus::HTTP_BAD_REQUEST);
             }
 
-            if (($page !== null && (!is_numeric($page) || $page <= 0)) ||
-                ($pagesize !== null && (!is_numeric($pagesize) || $pagesize <= 0))) {
+            if (($page !== null && (!is_numeric($page) || $page <= 0))
+                || ($pagesize !== null && (!is_numeric($pagesize) || $pagesize <= 0))
+            ) {
                 errorResponse('مقدار page و pagesize باید اعداد مثبت باشند.', Httpstatus::HTTP_BAD_REQUEST);
             }
 
-            $cities = $cityService->getCities((object)[
-                'province_id' => $provinceId ? (int)$provinceId : null,
-                'page' => $page ? (int)$page : null,
-                'pagesize' => $pagesize ? (int)$pagesize : null,
-                'fields' => $_GET['fields'] ?? $_GET['field'] ?? null, // نام درست‌تر
-                'orderby' => $_GET['orderby'] ?? null,
-            ]);
+            $cities = $cityService->getCities(
+                (object)[
+                    'province_id' => $provinceId ? (int)$provinceId : null,
+                    'page' => $page ? (int)$page : null,
+                    'pagesize' => $pagesize ? (int)$pagesize : null,
+                    'fields' => $_GET['fields'] ?? $_GET['field'] ?? null,
+                    'orderby' => $_GET['orderby'] ?? null,
+                ]
+            );
 
             if (empty($cities)) {
                 errorResponse('هیچ شهری یافت نشد.', Httpstatus::HTTP_NOT_FOUND);
             }
 
-            Response::respondAndDie([
-                'status' => 'success',
-                'count' => count($cities),
-                'data' => $cities
-            ]);
+            Response::respond(
+                [
+                    'status' => 'success',
+                    'count' => count($cities),
+                    'data' => $cities
+                ]
+            );
+
+            CacheUtility::end();
             break;
-
-
 
         case 'PUT':
             $cityId = $requestBody['city_id'] ?? null;
@@ -81,10 +95,12 @@ try {
                 errorResponse('شهر با این شناسه یافت نشد یا خطا در بروزرسانی.', Httpstatus::HTTP_NOT_FOUND);
             }
 
-            Response::respondAndDie([
-                'status' => 'success',
-                'message' => 'نام شهر با موفقیت بروزرسانی شد.'
-            ]);
+            Response::respondAndDie(
+                [
+                    'status' => 'success',
+                    'message' => 'نام شهر با موفقیت بروزرسانی شد.'
+                ]
+            );
             break;
 
         case 'DELETE':
@@ -100,16 +116,17 @@ try {
                 errorResponse('شهر با این شناسه یافت نشد یا حذف انجام نشد.', Httpstatus::HTTP_NOT_FOUND);
             }
 
-            Response::respondAndDie([
-                'status' => 'success',
-                'message' => 'شهر با موفقیت حذف شد.'
-            ]);
+            Response::respondAndDie(
+                [
+                    'status' => 'success',
+                    'message' => 'شهر با موفقیت حذف شد.'
+                ]
+            );
             break;
 
         default:
             errorResponse('متد درخواست نامعتبر است.', Httpstatus::HTTP_METHOD_NOT_ALLOWED);
     }
-
 } catch (Exception $e) {
     errorResponse('خطای سرور: ' . $e->getMessage(), Httpstatus::HTTP_INTERNAL_SERVER_ERROR);
 }

@@ -9,7 +9,7 @@ try {
     die('Connection failed: ' . $e->getMessage());
 }
 
-#==============  Simple Validators  ================
+// ==============  Simple Validators  ================
 function isValidCity($data): bool
 {
     return !empty($data['province_id']) && is_numeric($data['province_id']) && !empty($data['name']);
@@ -20,7 +20,7 @@ function isValidProvince($data): bool
     return !empty($data['name']);
 }
 
-#================  Read Operations  =================
+// ================  Read Operations  =================
 function getCities($data = null): array
 {
     global $pdo;
@@ -102,7 +102,7 @@ function getProvinces($data = null): array
     return $stmt->fetchAll(PDO::FETCH_OBJ);
 }
 
-#================  Create Operations  =================
+// ================  Create Operations  =================
 function addCity($data)
 {
     global $pdo;
@@ -112,10 +112,12 @@ function addCity($data)
 
     $sql = "INSERT INTO city (province_id, name) VALUES (:province_id, :name)";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([
+    $stmt->execute(
+        [
         ':province_id' => (int)$data['province_id'],
         ':name' => $data['name']
-    ]);
+        ]
+    );
 
     return $stmt->rowCount();
 }
@@ -134,16 +136,18 @@ function addProvince($data)
     return $stmt->rowCount();
 }
 
-#================  Update Operations  =================
+// ================  Update Operations  =================
 function changeCityName($city_id, $name): int
 {
     global $pdo;
     $sql = "UPDATE city SET name = :name WHERE id = :id";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([
+    $stmt->execute(
+        [
         ':name' => $name,
         ':id' => (int)$city_id
-    ]);
+        ]
+    );
     return $stmt->rowCount();
 }
 
@@ -152,14 +156,16 @@ function changeProvinceName($province_id, $name): int
     global $pdo;
     $sql = "UPDATE province SET name = :name WHERE id = :id";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([
+    $stmt->execute(
+        [
         ':name' => $name,
         ':id' => (int)$province_id
-    ]);
+        ]
+    );
     return $stmt->rowCount();
 }
 
-#================  Delete Operations  =================
+// ================  Delete Operations  =================
 function deleteCity($city_id): int
 {
     global $pdo;

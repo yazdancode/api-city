@@ -22,7 +22,6 @@ class Response
         ];
 
         echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-        exit;
     }
 
     /**
@@ -44,7 +43,7 @@ class Response
      * @param array $customHeaders
      * @return void
      */
-    public static function setHeaders(int $statusCode, array $customHeaders = []): void
+    public static function setHeaders(int $statusCode=Httpstatus::HTTP_OK, array $customHeaders = []): void
     {
         header('Content-Type: application/json; charset=utf-8');
         header('Access-Control-Allow-Origin: *');
