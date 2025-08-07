@@ -1,7 +1,7 @@
 <?php
 
-const JWT_ALG = 'HS256';
-const JWT_KEY = 'test-project';
+//const JWT_ALG = 'HS256';
+//const JWT_KEY = 'test-project';
 
 
 include_once "vendor/autoload.php";

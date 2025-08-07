@@ -1,12 +1,44 @@
 <?php
 
 require __DIR__ . '/../../../loader.php';
+require __DIR__ . '/../../../App/Utilities/helpers.php';
+
 use App\Services\CityService;
 use App\Utilities\Response;
 use App\Utilities\Httpstatus;
 use App\Utilities\CacheUtility;
 
 #TODO: check Authorization (use a jwt token)
+
+//var_dump(getallheaders());
+//exit;
+
+
+
+$token = getBearerToken();
+
+if ($token === null) {
+    // اگر errorResponse اجرای برنامه را متوقف نمی‌کند، از exit استفاده کنید
+    errorResponse("توکن ارسال نشده است.", Httpstatus::HTTP_UNAUTHORIZED);
+    exit;
+}
+
+$user = isValidToken($token);
+if (!$user) {
+    // فرض بر این است که respondAndDie خودش die یا exit دارد، پس نیازی به exit نیست
+    Response::respondAndDie(['message' => 'توکن نامعتبر است.'], Httpstatus::HTTP_UNAUTHORIZED);
+}
+
+// پاسخ موفق با اطلاعات کاربر
+$payload = [
+    'message' => 'توکن معتبر است.',
+    'user' => $user
+];
+
+Response::respondAndDie($payload, Httpstatus::HTTP_OK);
+
+
+#TODO: get request token and validate it
 
 
 
@@ -20,10 +52,7 @@ $requestMethod = $_SERVER['REQUEST_METHOD'];
 $requestBody = json_decode(file_get_contents('php://input'), true);
 $cityService = new CityService();
 
-function errorResponse(string $message, int $statusCode): void
-{
-    Response::respondAndDie(['status' => 'error', 'message' => $message], $statusCode);
-}
+
 
 try {
     switch ($requestMethod) {
@@ -37,6 +66,14 @@ try {
             break;
 
         case 'GET':
+            $provinceId = $_GET['province_id'] ?? null;
+
+            // بررسی دسترسی به استان
+            if ($provinceId !== null && !hasAccessToProvince($user, (int)$provinceId)) {
+                errorResponse('شما به این استان دسترسی ندارید.', Httpstatus::HTTP_FORBIDDEN);
+                exit;
+            }
+
             CacheUtility::init(false);
             if (CacheUtility::cacheExists()) {
                 Response::setHeaders();
@@ -46,7 +83,6 @@ try {
 
             CacheUtility::start();
 
-            $provinceId = $_GET['province_id'] ?? null;
             $page = $_GET['page'] ?? null;
             $pagesize = $_GET['pagesize'] ?? null;
 
@@ -74,16 +110,15 @@ try {
                 errorResponse('هیچ شهری یافت نشد.', Httpstatus::HTTP_NOT_FOUND);
             }
 
-            Response::respond(
-                [
-                    'status' => 'success',
-                    'count' => count($cities),
-                    'data' => $cities
-                ]
-            );
+            Response::respond([
+                'status' => 'success',
+                'count' => count($cities),
+                'data' => $cities
+            ]);
 
             CacheUtility::end();
             break;
+
 
         case 'PUT':
             $cityId = $requestBody['city_id'] ?? null;
@@ -134,3 +169,5 @@ try {
 } catch (Exception $e) {
     errorResponse('خطای سرور: ' . $e->getMessage(), Httpstatus::HTTP_INTERNAL_SERVER_ERROR);
 }
+
+

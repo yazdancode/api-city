@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>AJAX JWT Token</title>
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background: #f7f7f7;
+            direction: rtl;
+            padding-top: 80px;
+            text-align: center;
+        }
+
+        form {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            width: 400px;
+            margin: auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        input[type=email], input[type=submit] {
+            width: 90%;
+            padding: 14px;
+            margin: 10px 0;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        input[type=submit] {
+            background: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        input[type=submit]:hover {
+            background: #218838;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 1.1rem;
+        }
+
+        code {
+            background: #eee;
+            padding: 5px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<form id="tokenForm">
+    <h2>دریافت توکن JWT با AJAX</h2>
+    <input type="email" name="email" placeholder="ایمیل خود را وارد کنید" required>
+    <input type="submit" value="دریافت توکن">
+</form>
+
+<div id="result"></div>
+
+<script>
+    document.getElementById('tokenForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const email = this.email.value;
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = 'لطفاً صبر کنید...';
+
+        fetch('generate_token.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'email=' + encodeURIComponent(email)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    resultDiv.innerHTML = `<p style="color:red">${data.error}</p>`;
+                } else {
+                    resultDiv.innerHTML = `
+                    <p><strong>کاربر:</strong> ${data.name}</p>
+                    <p><strong>توکن:</strong> <code>${data.token}</code></p>
+                `;
+                }
+            })
+            .catch(err => {
+                resultDiv.innerHTML = `<p style="color:red">خطا در ارتباط با سرور</p>`;
+            });
+    });
+</script>
+
+</body>
+</html>

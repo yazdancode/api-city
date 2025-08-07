@@ -16,11 +16,6 @@ $requestBody = json_decode(file_get_contents('php://input'), true);
 $cityService = new CityService();
 
 
-function errorResponse(string $message, int $statusCode): void
-{
-    Response::respondAndDie(['status' => 'error', 'message' => $message], $statusCode);
-}
-
 try {
     switch ($requestMethod) {
         case 'POST':
